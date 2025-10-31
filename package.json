@@ -12,8 +12,10 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@google/generative-ai": "^0.24.1",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
+    "@vis.gl/react-google-maps": "^1.7.0",
     "firebase": "^12.4.0",
     "html5-qrcode": "^2.3.8",
     "qrcode.react": "^4.2.0",

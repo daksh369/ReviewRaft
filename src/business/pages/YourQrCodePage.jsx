@@ -1,137 +1,168 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container,
   Box,
   Typography,
   Button,
-  AppBar,
-  Toolbar,
-  IconButton,
+  CircularProgress,
   Paper,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Link,
+  Alert,
+  IconButton
 } from '@mui/material';
-import { 
-  ArrowBack as ArrowBackIcon, 
-  Download as DownloadIcon, 
-  Share as ShareIcon,
-  Store as StoreIcon,
-  Receipt as ReceiptIcon,
-  TableRestaurant as TableRestaurantIcon
-} from '@mui/icons-material';
-import { QRCodeCanvas as QRCode } from 'qrcode.react';
-import { useLocation } from 'react-router-dom';
-
-const usageSteps = [
-    {
-      icon: <StoreIcon />,
-      primary: "Place at Counter",
-      secondary: "Make it easy for customers at checkout.",
-    },
-    {
-      icon: <ReceiptIcon />,
-      primary: "Add to Receipts",
-      secondary: "A reminder they can take with them.",
-    },
-    {
-      icon: <TableRestaurantIcon />,
-      primary: "Display on Tables",
-      secondary: "Perfect for restaurants and cafes.",
-    },
-  ];
+import { Download, Refresh, ContentCopy, Edit, LocationOn } from '@mui/icons-material';
+import { useParams, useNavigate } from 'react-router-dom';
+import { db, storage } from '../../firebase';
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { QRCodeCanvas } from 'qrcode.react';
 
 function YourQrCodePage() {
-    const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const reviewLink = queryParams.get('reviewLink') || "https://g.page/r/YourLinkHere";
+    const { docId } = useParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [qrCodeValue, setQrCodeValue] = useState('');
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [businessData, setBusinessData] = useState(null); // State for business data
+    const qrCodeRef = useRef(null);
+    const [isGenerating, setIsGenerating] = useState(false);
 
-    const downloadQRCode = () => {
-        const canvas = document.getElementById('qrCodeEl');
-        if (canvas) {
-            const qrCodeURL = canvas.toDataURL("image/png")
-                .replace("image/png", "image/octet-stream");
-            let aEl = document.createElement("a");
-            aEl.href = qrCodeURL;
-            aEl.download = "QR_Code.png";
-            document.body.appendChild(aEl);
-            aEl.click();
-            document.body.removeChild(aEl);
+    const triggerQRCodeGeneration = useCallback(() => {
+        const uniqueQrCodeValue = `${window.location.origin}/review?business_id=${docId}&t=${Date.now()}`;
+        setQrCodeValue(uniqueQrCodeValue);
+        setIsGenerating(true);
+    }, [docId]);
+
+    useEffect(() => {
+        const fetchQrCode = async () => {
+            if (!docId) {
+                setLoading(false);
+                setError("No business ID provided.");
+                return;
+            }
+            setLoading(true);
+            setError('');
+            try {
+                const docRef = doc(db, "business_links", docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setBusinessData(data); // Save business data
+                    if (data.qrCodeUrl && data.qrCodeValue) {
+                        setQrCodeValue(data.qrCodeValue);
+                        setQrCodeUrl(data.qrCodeUrl);
+                    } else {
+                        triggerQRCodeGeneration();
+                    }
+                } else {
+                    setError("Business link not found.");
+                }
+            } catch (err) {
+                console.error("Error fetching QR Code:", err);
+                setError("Failed to load QR code data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchQrCode();
+    }, [docId, triggerQRCodeGeneration]);
+
+    const handleDownload = () => {
+        if (qrCodeUrl) {
+            const link = document.createElement('a');
+            link.href = qrCodeUrl;
+            link.download = 'business-qr-code.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } else if (qrCodeRef.current) {
+            const canvas = qrCodeRef.current.querySelector('canvas');
+            if (canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = 'business-qr-code.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
-      }
+    };
 
-  return (
-    <Box sx={{ backgroundColor: '#0D1117', minHeight: '100vh', color: 'white' }}>
-      <AppBar position="static" sx={{ backgroundColor: '#161B22' }}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="back">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Your QR Code
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="sm" sx={{ py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-          Your QR Code is Ready!
-        </Typography>
-        <Typography variant="subtitle1" gutterBottom sx={{ color: 'text.secondary' }}>
-          Here is your unique QR code for customers to leave reviews.
-        </Typography>
-        
-        <Paper sx={{ p: 4, my: 4, backgroundColor: '#161B22', display: 'flex', justifyContent: 'center' }}>
-            <QRCode id="qrCodeEl" value={reviewLink} size={256} fgColor="#FFFFFF" bgColor="#161B22" />
-        </Paper>
+    const handleCopyToClipboard = () => {
+        navigator.clipboard.writeText(qrCodeValue);
+    };
 
-        <Typography align="center" sx={{ color: 'text.secondary', mb: 2 }}>
-          For review link: <Link href={reviewLink} target="_blank" rel="noopener">{reviewLink}</Link>
-        </Typography>
+    const handleEdit = async () => {
+        if (!window.confirm("Are you sure you want to edit your business link? This will delete your current QR code and you'll have to create a new one.")) {
+            return;
+        }
+        try {
+            const docRef = doc(db, "business_links", docId);
+            await deleteDoc(docRef);
+            navigate('/business/add-business-link', { replace: true });
+        } catch (err) {
+            console.error("Failed to delete business link:", err);
+            setError("Could not delete the business link. Please try again.");
+        }
+    };
 
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Button
-              fullWidth
-              variant="contained"
-              startIcon={<DownloadIcon />}
-              onClick={downloadQRCode}
-              sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', backgroundColor: '#1E88E5' }}
-            >
-              Download
-            </Button>
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={<ShareIcon />}
-              sx={{ py: 1.5, textTransform: 'none', fontSize: '1rem', borderColor: '#1E88E5', color: '#1E88E5' }}
-            >
-              Share
-            </Button>
-          </Grid>
-        </Grid>
+    return (
+        <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+                Your QR Code
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Print this QR code and display it at your business location for customers to scan.
+            </Typography>
 
-        <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mt: 4 }}>
-          How to Use Your QR Code
-        </Typography>
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <List>
-          {usageSteps.map((step, index) => (
-            <ListItem key={index}>
-              <ListItemIcon sx={{ color: '#1E88E5' }}>
-                {step.icon}
-              </ListItemIcon>
-              <ListItemText primary={step.primary} secondary={step.secondary} />
-            </ListItem>
-          ))}
-        </List>
-      </Container>
-    </Box>
-  );
+            <Paper sx={{ p: 4, display: 'inline-block' }}>
+                {loading ? (
+                    <CircularProgress />
+                ) : qrCodeValue ? (
+                    <Box ref={qrCodeRef} >
+                        <QRCodeCanvas value={qrCodeValue} size={256} />
+                    </Box>
+                ) : (
+                    <Box sx={{ width: 256, height: 256, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="caption">QR Code not available</Typography>
+                    </Box>
+                )}
+            </Paper>
+
+            {businessData && (
+                <Box sx={{ mt: 2, color: 'text.secondary' }}>
+                    <Typography variant="subtitle1" component="div" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <LocationOn sx={{ mr: 1, fontSize: '1.2rem' }} /> {businessData.businessName}
+                    </Typography>
+                    <Typography variant="caption">{businessData.address}</Typography>
+                </Box>
+            )}
+
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Button variant="contained" startIcon={<Download />} onClick={handleDownload} disabled={!qrCodeValue || loading}>
+                    Download
+                </Button>
+                <Button variant="outlined" startIcon={<ContentCopy />} onClick={handleCopyToClipboard} disabled={!qrCodeValue || loading}>
+                    Copy Link
+                </Button>
+                <IconButton onClick={() => {
+                    setQrCodeUrl('');
+                    triggerQRCodeGeneration();
+                }} disabled={loading || isGenerating}>
+                    <Refresh />
+                </IconButton>
+                <IconButton onClick={handleEdit} disabled={loading}>
+                    <Edit />
+                </IconButton>
+            </Box>
+            {isGenerating && <Typography sx={{ mt: 2 }} variant="caption">Generating QR Code...</Typography>}
+        </Container>
+    );
 }
 
 export default YourQrCodePage;

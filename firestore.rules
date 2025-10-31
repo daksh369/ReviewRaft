@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Business links can be read by anyone, but only created, updated,
+    // or deleted by the authenticated user who owns them.
+    match /business_links/{linkId} {
+      allow read: if true;
+      allow create, update: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // For delete operations, we check the 'resource' object, which represents the
+      // document *before* the deletion.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Reviews can be created by anyone (unauthenticated customers).
+    match /reviews/{reviewId} {
+      allow create: if true;
+      allow read, update, delete: if false; // Nobody can modify or delete for now
+    }
+
+    // A user can read, create, and update their own profile data.
+    match /users/{userId} {
+      allow read: if true; // Allow public read access to user profiles
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if false; // Prevent users from deleting their own accounts
+    }
+  }
+}

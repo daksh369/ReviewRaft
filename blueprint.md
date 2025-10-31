@@ -1,32 +1,35 @@
-# Google Reviews QR Code Automation
+# Project Blueprint
 
 ## Overview
 
-This project aims to simplify the process of leaving Google reviews for businesses, especially in regions where English is not the primary language. The application allows customers to scan a QR code, which directs them to a web page where an AI-powered system generates a review. The user can then tweak the generated review and easily copy it to their clipboard, ready to be pasted into the Google review interface.
+This application is a powerful tool designed to help businesses gather customer reviews more efficiently.
 
-## Features
+### Core Features:
 
-*   **QR Code Scanning:** Businesses can generate a QR code that links to their review page.
-*   **AI-Generated Reviews:** The application will use a generative AI model to create reviews based on user input.
-*   **Review Customization:** Users can modify the AI-generated review to their liking.
-*   **One-Click Copy:** A simple "Copy and Add Review" button will copy the final review to the clipboard and redirect the user to the business's Google review page.
-*   **Mobile-First Design:** The application will be designed with a mobile-first approach, ensuring a seamless experience for users on smartphones.
+*   **Intelligent QR Code Generation:** Businesses can find their official Google Business Profile using a Google Places-powered search and generate a unique QR code that directs their customers to a dedicated review page.
+*   **AI-Powered Review Generation:** Customers provide feedback through a series of intuitive sliders, and the app uses a generative AI model to write a review based on this structured input.
+*   **Dynamic Keywords:** The selection of keywords is dynamically generated and tailored to each specific business based on its profile description.
+*   **Seamless Publishing with Pre-filled Stars:** A "Copy & Add Review" button allows the customer to copy the final text to their clipboard with a single click and be redirected to the business's Google review page, with the star rating pre-filled based on their feedback.
 
-## Plan
+### Design and User Experience:
 
-1.  **Project Setup:**
-    *   Create a standard React project structure with `src/components` and `src/pages` directories.
-    *   Install necessary dependencies: `react-router-dom`, `qrcode.react`.
-2.  **Component Development:**
-    *   `HomePage.jsx`: The main page of the application. It will contain the UI for generating and customizing reviews.
-    *   `QRCode.jsx`: A component to display the QR code.
-    *   `ReviewForm.jsx`: A form for users to input keywords or phrases to guide the AI in generating the review.
-    .
-3.  **Routing:**
-    *   Implement routing using `react-router-dom` to handle different pages of the application. For now, we will only have the home page.
-4.  **AI Integration:**
-    *   Integrate a generative AI model to generate reviews. For the initial version, a placeholder function will be used to simulate AI-generated text.
-5.  **UI/UX Design:**
-    *   Design a clean, intuitive, and mobile-friendly user interface.
-    *   Use a modern and visually appealing design with clear instructions for the user.
-    *   The user interface will guide the user through the process of generating, customizing, and submitting their review.
+The application is built with a **mobile-first** and user-centric approach, focusing on:
+*   An intuitive and beautiful interface that is easy to navigate.
+*   A responsive design that works perfectly on both mobile devices and the web.
+*   A modern aesthetic that uses vibrant colors, expressive typography, and icons to enhance usability.
+
+## Current Task: Implement Google Places API for QR Code Generation
+
+### Plan:
+
+1.  **Install Google Maps Libraries:** Add the necessary npm packages to integrate the Google Places API.
+2.  **Refactor Business Link Page:**
+    *   Replace the manual URL input field in `AddBusinessLinkPage.jsx` with a Google Places Autocomplete search box.
+    *   Allow users to search for and select their business from the official Google Places database.
+3.  **Generate Google Review URL:**
+    *   Once a business is selected, use its `place_id` to programmatically construct the direct Google review URL.
+    *   Save this URL to the database.
+4.  **Implement Dynamic Star Rating:**
+    *   In `ReviewGeneratorPage.jsx`, update the `handleCopyAndAddReview` function.
+    *   Dynamically calculate the star rating (1-5) based on the "Overall Experience" slider.
+    *   Append this star rating to the Google review URL before redirecting the user.

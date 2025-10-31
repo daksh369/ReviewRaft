@@ -1,120 +1,125 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Box,
-  Avatar,
   Typography,
   TextField,
   Button,
   Grid,
   Link,
+  CircularProgress,
+  Alert,
   IconButton,
-  InputAdornment,
+  InputAdornment
 } from '@mui/material';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import LanguageIcon from '@mui/icons-material/Language';
-import { Google as GoogleIcon } from '@mui/icons-material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from 'react-router-dom';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { auth, googleProvider } from '../../firebase';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Add login logic here
-    navigate('/business/add-business-link');
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/business/dashboard');
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
   };
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate('/business/dashboard');
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoading(false);
   };
 
   return (
-    <Container component="main" maxWidth="xs" sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
-        <Button
-          variant="outlined"
-          startIcon={<LanguageIcon />}
-          sx={{
-            borderRadius: '20px',
-            textTransform: 'none',
-            color: 'black',
-            borderColor: 'grey.400',
-          }}
-        >
-          EN
-        </Button>
-      </Box>
-      <Box
+    <Container 
+      component="main" 
+      maxWidth="sm" 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+      }}
+    >
+      <Box 
         sx={{
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          mt: 8,
         }}
       >
-        <Avatar sx={{ m: 1, bgcolor: '#1A73E8', width: 64, height: 64 }}>
-          <ChatBubbleOutlineIcon sx={{ fontSize: 40 }}/>
-        </Avatar>
-        <Typography component="h1" variant="h4" sx={{ mt: 2, fontWeight: 'bold' }}>
-          Welcome Back!
-        </Typography>
-        <Typography component="p" sx={{ mt: 1, color: 'text.secondary' }}>
-          Log in to manage your business reviews.
-        </Typography>
-        <Box component="form" noValidate sx={{ mt: 3 }} onSubmit={handleLogin}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
-            Email or Username
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, alignSelf: 'flex-start' }}>
+          <QrCode2Icon sx={{ fontSize: 40, mr: 1, color: '#1A73E8' }} />
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            ReviewQR
           </Typography>
+        </Box>
+
+        <Typography component="h1" variant="h4" sx={{ mb: 1, fontWeight: 'bold' }}>
+          Welcome back
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          Log in to manage your business page.
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+
+        <Box component="form" onSubmit={handleLogin} noValidate sx={{ width: '100%' }}>
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            placeholder="Enter your email or username"
+            label="Email Address"
             name="email"
             autoComplete="email"
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <PersonOutlineIcon />
-                </InputAdornment>
-              ),
-            }}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            InputProps={{ sx: { borderRadius: '8px', fontSize: '1.1rem' } }}
           />
-          <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mt: 2 }}>
-            Password
-          </Typography>
           <TextField
             margin="normal"
             required
             fullWidth
             name="password"
-            placeholder="Enter your password"
+            label="Password"
             type={showPassword ? 'text' : 'password'}
             id="password"
             autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LockOpenIcon />
-                </InputAdornment>
-              ),
+              sx: { borderRadius: '8px', fontSize: '1.1rem' },
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
                     aria-label="toggle password visibility"
-                    onClick={handleClickShowPassword}
-                    onMouseDown={handleMouseDownPassword}
+                    onClick={() => setShowPassword(!showPassword)}
                     edge="end"
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -123,29 +128,22 @@ function LoginPage() {
               ),
             }}
           />
-          <Grid container>
-            <Grid item xs>
-              <Link href="#" variant="body2" sx={{ color: '#1A73E8', textDecoration: 'none' }}>
-                Forgot Password?
-              </Link>
-            </Grid>
-          </Grid>
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2, py: 1.5, textTransform: 'none', fontSize: '1rem', borderRadius: '8px', backgroundColor: '#1A73E8' }}
+            disabled={loading}
+            sx={{ mt: 3, mb: 2, py: 1.5, textTransform: 'none', fontSize: '1.1rem', borderRadius: '8px', backgroundColor: '#4285F4' }}
           >
-            Login
+            {loading ? <CircularProgress size={24} /> : 'Login'}
           </Button>
-          <Typography component="p" align="center" sx={{ my: 2, color: 'text.secondary' }}>
-            or
-          </Typography>
           <Button
             fullWidth
             variant="outlined"
             startIcon={<GoogleIcon />}
-            sx={{ mb: 2, py: 1.5, textTransform: 'none', fontSize: '1rem', borderRadius: '8px', borderColor: 'grey.400', color: 'black' }}
+            sx={{ mb: 2, py: 1.5, textTransform: 'none', fontSize: '1.1rem', borderRadius: '8px', borderColor: 'grey.400', color: 'black' }}
+            onClick={handleGoogleSignIn}
+            disabled={loading}
           >
             Login with Google
           </Button>
