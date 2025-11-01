@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -16,44 +16,84 @@ import {
   APIProvider, 
   Map, 
   Marker,
-  useAutocomplete,
 } from '@vis.gl/react-google-maps';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../../firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { useDebounce } from '../hooks/useDebounce';
 
-const PlaceAutocomplete = ({ onPlaceSelect }) => {
+const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
   const [inputValue, setInputValue] = useState("");
-  const { ref, suggestions, onInput, onSelect } = useAutocomplete({
-    onPlaceSelect: (place) => {
-      onPlaceSelect(place);
-      setInputValue(place.displayName);
-    },
-    options: {
-        types: ['establishment']
-    }
-  });
+  const [suggestions, setSuggestions] = useState([]);
+  const debouncedInput = useDebounce(inputValue, 300);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (debouncedInput.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      
+      const requestBody = {
+        "textQuery": debouncedInput,
+        "includedTypes": ["establishment"]
+      };
+
+      try {
+        const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': apiKey,
+            'X-Goog-FieldMask': 'places.displayName,places.id,places.formattedAddress,places.location'
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            console.error('Failed to fetch autocomplete suggestions:', response.statusText);
+            setSuggestions([]);
+            return;
+        }
+
+        const data = await response.json();
+        setSuggestions(data.places || []);
+      } catch (error) {
+        console.error('Error fetching autocomplete suggestions:', error);
+        setSuggestions([]);
+      }
+    };
+
+    fetchSuggestions();
+  }, [debouncedInput, apiKey]);
+
+  const handleSelect = (place) => {
+    setInputValue(place.displayName.text);
+    setSuggestions([]);
+    onPlaceSelect(place);
+  };
 
   return (
     <div>
       <TextField
-        ref={ref}
         value={inputValue}
-        onChange={onInput}
+        onChange={(e) => setInputValue(e.target.value)}
         fullWidth
         placeholder="Search for your business"
       />
       {suggestions.length > 0 && (
-        <List>
-          {suggestions.map((suggestion) => (
-            <ListItem
-              button
-              key={suggestion.placeId}
-              onClick={() => onSelect(suggestion)}
-            >
-              <ListItemText primary={suggestion.text} />
-            </ListItem>
-          ))}
+        <List component="div" sx={{ position: 'relative' }}>
+          <Paper sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1200, mt: 1 }}>
+            {suggestions.map((place) => (
+              <ListItem
+                button
+                key={place.id}
+                onClick={() => handleSelect(place)}
+              >
+                <ListItemText primary={place.displayName.text} />
+              </ListItem>
+            ))}
+          </Paper>
         </List>
       )}
     </div>
@@ -99,11 +139,11 @@ const AddBusinessLinkPage = () => {
             await updateDoc(businessDocRef, {
                 url: reviewUrl,
                 placeId: place.id,
-                businessName: place.displayName,
+                businessName: place.displayName.text,
                 address: place.formattedAddress,
                 location: {
-                    lat: place.location.lat,
-                    lng: place.location.lng,
+                    lat: place.location.latitude,
+                    lng: place.location.longitude,
                 }
             });
             
@@ -116,7 +156,7 @@ const AddBusinessLinkPage = () => {
     };
 
     return (
-        <APIProvider apiKey={googleMapsApiKey} libraries={['places']}>
+        <APIProvider apiKey={googleMapsApiKey}>
             <Container maxWidth="md" sx={{ py: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
                     Link Your Google Business Profile
@@ -128,23 +168,23 @@ const AddBusinessLinkPage = () => {
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
                 <Paper sx={{ p: 3, mt: 2 }}>
-                    <PlaceAutocomplete onPlaceSelect={setPlace} />
+                    <PlaceAutocomplete onPlaceSelect={setPlace} apiKey={googleMapsApiKey} />
                     
                     {place && (
                         <Box sx={{ mt: 3 }}>
                             <Typography variant="h6">Confirm your business location</Typography>
                             <Paper variant="outlined" sx={{ p: 2, mt: 1, backgroundColor: '#f5f5f5' }}>
-                                <Typography variant="h6">{place.displayName}</Typography>
+                                <Typography variant="h6">{place.displayName.text}</Typography>
                                 <Typography color="text.secondary">{place.formattedAddress}</Typography>
                             </Paper>
                             <Box sx={{ height: '300px', mt: 2, borderRadius: 1, overflow: 'hidden' }}>
                                 <Map
-                                    defaultCenter={place.location}
+                                    defaultCenter={{lat: place.location.latitude, lng: place.location.longitude}}
                                     defaultZoom={17}
                                     gestureHandling={'greedy'}
                                     disableDefaultUI={true}
                                 >
-                                    <Marker position={place.location} />
+                                    <Marker position={{lat: place.location.latitude, lng: place.location.longitude}} />
                                 </Map>
                             </Box>
                         </Box>

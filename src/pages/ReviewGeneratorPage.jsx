@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 
@@ -79,6 +79,7 @@ const ReviewGeneratorPage = () => {
   const [businessName, setBusinessName] = useState('');
   const [businessLink, setBusinessLink] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -100,11 +101,18 @@ const ReviewGeneratorPage = () => {
         .map(([keyword, rating]) => `- ${keyword}: ${rating > 75 ? 'great' : rating > 50 ? 'good' : rating > 25 ? 'okay' : 'bad'}`)
         .join('\n');
 
-    const prompt = `Generate a casual, friendly customer review in ${language} with the following characteristics:
-        - Overall experience: ${experienceDescription}
-        - Specific feedback:
-        ${keywordDetails}
-        - Review:`;
+    const prompt = `Generate a casual, friendly customer review in ${language} for a business named "${businessName}".
+
+Please adhere to the following:
+- The review must be based on the customer's feedback provided below.
+- NEVER use placeholders like "[Business Name]". The review must be ready to publish.
+
+Customer's Feedback:
+- Overall experience: ${experienceDescription}
+- Specific feedback:
+${keywordDetails}
+
+Review:`;
 
     try {
         const result = await model.generateContent(prompt);
@@ -118,7 +126,7 @@ const ReviewGeneratorPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [experience, keywordRatings, language]);
+  }, [experience, keywordRatings, language, businessName]);
 
   useEffect(() => {
     const fetchBusinessData = async () => {
@@ -212,12 +220,30 @@ const ReviewGeneratorPage = () => {
     }
   };
 
-  const handleCopyAndAddReview = () => {
+  const handleCopyAndAddReview = async () => {
     navigator.clipboard.writeText(review);
-    if (businessLink) {
-        window.location.href = businessLink;
-    } else {
-        alert('Business review link not found!');
+    setIsSaving(true);
+    
+    try {
+        await addDoc(collection(db, "reviews"), {
+            businessId: businessId,
+            reviewText: review,
+            language: language,
+            overallExperience: experience,
+            keywordRatings: keywordRatings,
+            createdAt: serverTimestamp()
+        });
+        
+        if (businessLink) {
+            window.location.href = businessLink;
+        } else {
+            alert('Business review link not found!');
+        }
+    } catch (error) {
+        console.error("Error saving review: ", error);
+        alert('Failed to save your review data. Please try again.');
+    } finally {
+        setIsSaving(false);
     }
   };
   
@@ -248,7 +274,6 @@ const ReviewGeneratorPage = () => {
       </AppBar>
 
       <Box sx={{ p: 2 }}>
-        {/* ... rest of the page content is unchanged */}
         <Paper sx={{ p: 2, mb: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>Review Language</Typography>
           <Grid container spacing={1}>
@@ -380,9 +405,9 @@ const ReviewGeneratorPage = () => {
           variant="contained"
           color="primary"
           onClick={handleCopyAndAddReview}
-          disabled={!review}
+          disabled={!review || isSaving}
         >
-          Copy & Add Review
+          {isSaving ? <CircularProgress size={24} /> : 'Copy & Add Review'}
         </Button>
       </Box>
     </Box>
