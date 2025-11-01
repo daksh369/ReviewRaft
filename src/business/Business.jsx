@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import BusinessNavbar from './components/BusinessNavbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -22,6 +22,7 @@ const BillingPage = () => (
 
 function Business() {
   const location = useLocation();
+  // Correctly check against the full path
   const hideNavbar = ['/business/login', '/business/signup'].includes(location.pathname);
 
   // Define a standard height for the navbar to use as an offset for the page content.
@@ -32,6 +33,7 @@ function Business() {
         {!hideNavbar && <BusinessNavbar />}
         <Box sx={{ pt: !hideNavbar ? navbarHeight : 0 }}>
           <Routes>
+            <Route index element={<Navigate to="login" replace />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
             <Route
