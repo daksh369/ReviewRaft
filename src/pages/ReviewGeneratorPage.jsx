@@ -17,7 +17,7 @@ import {
   Menu,
   MenuItem
 } from '@mui/material';
-import { Add, Check as CheckIcon } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 import { db } from '../firebase';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -80,7 +80,6 @@ const ReviewGeneratorPage = () => {
   const [businessLink, setBusinessLink] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
 
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -121,7 +120,6 @@ Review:`;
         let text = response.text();
         text = text.replace(/^"|"$/g, '').replace(/\*/g, '');
         setReview(text);
-        setIsCopied(false);
     } catch (err) {
       setError('Failed to generate review. Please try again.');
       console.error('Error generating review:', err);
@@ -222,28 +220,35 @@ Review:`;
     }
   };
 
-  const handleCopyAndSaveReview = async () => {
-    if(isCopied) return;
+  const handleCopyAndAddReview = () => {
+    if (!review || !businessLink) {
+      return;
+    }
 
+    // Immediately open the new tab as a direct result of the user's click
+    window.open(businessLink, '_blank');
+
+    // Then, perform the background tasks
     navigator.clipboard.writeText(review);
     setIsSaving(true);
     
-    try {
-        await addDoc(collection(db, "reviews"), {
-            businessId: businessId,
-            reviewText: review,
-            language: language,
-            overallExperience: experience,
-            keywordRatings: keywordRatings,
-            createdAt: serverTimestamp()
-        });
-        setIsCopied(true);
-    } catch (error) {
+    // Fire and forget the database write operation
+    addDoc(collection(db, "reviews"), {
+        businessId: businessId,
+        reviewText: review,
+        language: language,
+        overallExperience: experience,
+        keywordRatings: keywordRatings,
+        createdAt: serverTimestamp()
+    }).then(() => {
+        // Optional: handle success, e.g., show a temporary "Saved!" message
+    }).catch(error => {
+        // Handle the error, e.g., by logging it to an error reporting service
         console.error("Error saving review: ", error);
-        alert('Failed to save your review data. Please try again.');
-    } finally {
+        // Optionally, inform the user that the save failed, though they have already been redirected.
+    }).finally(() => {
         setIsSaving(false);
-    }
+    });
   };
   
   const currentExperience = experienceLevels.find(e => e.value === experience);
@@ -388,7 +393,7 @@ Review:`;
             rows={6}
             variant="outlined"
             value={review}
-            onChange={(e) => setReview(e.g.value)}
+            onChange={(e) => setReview(e.target.value)}
             placeholder={!review && !loading ? "Click 'Generate' to create a review." : ""}
           />
         </Paper>
@@ -402,16 +407,11 @@ Review:`;
         <Button
           fullWidth
           variant="contained"
-          color={isCopied ? "success" : "primary"}
-          component={isCopied ? "a" : "button"}
-          href={isCopied ? businessLink : undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handleCopyAndSaveReview}
-          disabled={!review || isSaving || !businessLink}
-          startIcon={isCopied ? <CheckIcon /> : null}
+          color="primary"
+          onClick={handleCopyAndAddReview}
+          disabled={!review || isSaving}
         >
-          {isSaving ? <CircularProgress size={24} /> : (isCopied ? 'Copied! Add Review on Google' : 'Copy & Add Review')}
+          {isSaving ? <CircularProgress size={24} /> : 'Copy & Add Review'}
         </Button>
       </Box>
     </Box>
