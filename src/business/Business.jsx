@@ -10,7 +10,6 @@ import AddBusinessLinkPage from './pages/AddBusinessLinkPage';
 import YourQrCodePage from './pages/YourQrCodePage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
-import QrCodeRedirector from './pages/QrCodeRedirector';
 
 // Placeholder for the new billing page
 const BillingPage = () => (
@@ -56,7 +55,7 @@ function Business() {
               path="your-qr-code"
               element={
                 <ProtectedRoute>
-                  <QrCodeRedirector />
+                  <YourQrCodePage />
                 </ProtectedRoute>
               }
             />
