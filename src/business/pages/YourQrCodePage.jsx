@@ -12,7 +12,7 @@ import {
 import { Download, Refresh, ContentCopy, Edit, LocationOn } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db, storage } from '../../firebase';
-import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -23,7 +23,7 @@ function YourQrCodePage() {
     const [error, setError] = useState('');
     const [qrCodeValue, setQrCodeValue] = useState('');
     const [qrCodeUrl, setQrCodeUrl] = useState('');
-    const [businessData, setBusinessData] = useState(null); // State for business data
+    const [businessData, setBusinessData] = useState(null);
     const qrCodeRef = useRef(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -33,22 +33,48 @@ function YourQrCodePage() {
         setIsGenerating(true);
     }, [docId]);
 
+    // This effect runs after a new QR code value is set and isGenerating is true
+    useEffect(() => {
+        if (isGenerating && qrCodeRef.current) {
+            const canvas = qrCodeRef.current.querySelector('canvas');
+            if (canvas) {
+                const dataUrl = canvas.toDataURL('image/png');
+                const storageRef = ref(storage, `qrcodes/${docId}.png`);
+                
+                uploadString(storageRef, dataUrl, 'data_url').then(async () => {
+                    const downloadURL = await getDownloadURL(storageRef);
+                    setQrCodeUrl(downloadURL);
+                    await updateDoc(doc(db, "business_links", docId), {
+                        qrCodeUrl: downloadURL,
+                        qrCodeValue: qrCodeValue,
+                    });
+                }).catch(err => {
+                    console.error("Error uploading QR code:", err);
+                    setError("Failed to save the new QR code.");
+                }).finally(() => {
+                    setIsGenerating(false); // This is crucial to stop the loading state
+                });
+            } else {
+                // If canvas is not found, stop generating to prevent infinite loop
+                setIsGenerating(false);
+            }
+        }
+    }, [isGenerating, docId, qrCodeValue]);
+
     useEffect(() => {
         const fetchQrCode = async () => {
             if (!docId) {
-                setLoading(false);
                 setError("No business ID provided.");
+                setLoading(false);
                 return;
             }
             setLoading(true);
-            setError('');
             try {
                 const docRef = doc(db, "business_links", docId);
                 const docSnap = await getDoc(docRef);
-
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    setBusinessData(data); // Save business data
+                    setBusinessData(data);
                     if (data.qrCodeUrl && data.qrCodeValue) {
                         setQrCodeValue(data.qrCodeValue);
                         setQrCodeUrl(data.qrCodeUrl);
@@ -65,49 +91,25 @@ function YourQrCodePage() {
                 setLoading(false);
             }
         };
-
         fetchQrCode();
     }, [docId, triggerQRCodeGeneration]);
 
     const handleDownload = () => {
-        if (qrCodeUrl) {
-            const link = document.createElement('a');
-            link.href = qrCodeUrl;
-            link.download = 'business-qr-code.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } else if (qrCodeRef.current) {
-            const canvas = qrCodeRef.current.querySelector('canvas');
-            if (canvas) {
-                const dataUrl = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = 'business-qr-code.png';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-        }
+        const link = document.createElement('a');
+        link.href = qrCodeUrl;
+        link.download = `${businessData?.businessName?.replace(/\s+/g, '-') || 'business'}-qr-code.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleCopyToClipboard = () => {
         navigator.clipboard.writeText(qrCodeValue);
     };
-
-    const handleEdit = async () => {
-        if (!window.confirm("Are you sure you want to edit your business link? This will delete your current QR code and you'll have to create a new one.")) {
-            return;
-        }
-        try {
-            const docRef = doc(db, "business_links", docId);
-            await deleteDoc(docRef);
-            navigate('/business/add-business-link', { replace: true });
-        } catch (err) {
-            console.error("Failed to delete business link:", err);
-            setError("Could not delete the business link. Please try again.");
-        }
-    };
+    
+    const handleEdit = () => {
+        navigate('/business/add-business-link');
+    }
 
     return (
         <Container maxWidth="sm" sx={{ py: 4, textAlign: 'center' }}>
@@ -123,13 +125,25 @@ function YourQrCodePage() {
             <Paper sx={{ p: 4, display: 'inline-block' }}>
                 {loading ? (
                     <CircularProgress />
-                ) : qrCodeValue ? (
-                    <Box ref={qrCodeRef} >
-                        <QRCodeCanvas value={qrCodeValue} size={256} />
-                    </Box>
                 ) : (
-                    <Box sx={{ width: 256, height: 256, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="caption">QR Code not available</Typography>
+                    <Box sx={{ position: 'relative', width: 256, height: 256 }}>
+                        {/* Always render the canvas if qrCodeValue exists, so we can reference it */}
+                        {qrCodeValue && (
+                            <Box ref={qrCodeRef} sx={{ display: 'none' }}>
+                                <QRCodeCanvas value={qrCodeValue} size={256} />
+                            </Box>
+                        )}
+                        
+                        {/* Show loader or final image */}
+                        {isGenerating ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : qrCodeUrl ? (
+                            <img src={qrCodeUrl} alt="QR Code" width={256} height={256} />
+                        ) : (
+                             <Typography variant="caption">QR Code not available. Try refreshing.</Typography>
+                        )}
                     </Box>
                 )}
             </Paper>
@@ -144,23 +158,20 @@ function YourQrCodePage() {
             )}
 
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <Button variant="contained" startIcon={<Download />} onClick={handleDownload} disabled={!qrCodeValue || loading}>
+                <Button variant="contained" startIcon={<Download />} onClick={handleDownload} disabled={!qrCodeUrl || loading || isGenerating}>
                     Download
                 </Button>
-                <Button variant="outlined" startIcon={<ContentCopy />} onClick={handleCopyToClipboard} disabled={!qrCodeValue || loading}>
+                <Button variant="outlined" startIcon={<ContentCopy />} onClick={handleCopyToClipboard} disabled={!qrCodeValue || loading || isGenerating}>
                     Copy Link
                 </Button>
-                <IconButton onClick={() => {
-                    setQrCodeUrl('');
-                    triggerQRCodeGeneration();
-                }} disabled={loading || isGenerating}>
+                <IconButton onClick={triggerQRCodeGeneration} disabled={loading || isGenerating}>
                     <Refresh />
                 </IconButton>
-                <IconButton onClick={handleEdit} disabled={loading}>
+                <IconButton onClick={handleEdit} disabled={loading || isGenerating}>
                     <Edit />
                 </IconButton>
             </Box>
-            {isGenerating && <Typography sx={{ mt: 2 }} variant="caption">Generating QR Code...</Typography>}
+            {isGenerating && <Typography sx={{ mt: 2 }} variant="caption">Generating new QR Code...</Typography>}
         </Container>
     );
 }

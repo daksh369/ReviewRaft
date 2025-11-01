@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import BusinessNavbar from './components/BusinessNavbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
@@ -8,9 +8,17 @@ import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import AddBusinessLinkPage from './pages/AddBusinessLinkPage';
 import YourQrCodePage from './pages/YourQrCodePage';
-import AutoReplyPage from './pages/AutoReplyPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ProfileSettingsPage from './pages/ProfileSettingsPage';
+import QrCodeRedirector from './pages/QrCodeRedirector';
+
+// Placeholder for the new billing page
+const BillingPage = () => (
+    <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h4">Subscription & Billing</Typography>
+        <Typography variant="body1">This feature is coming soon!</Typography>
+    </Box>
+);
 
 function Business() {
   const location = useLocation();
@@ -22,7 +30,6 @@ function Business() {
   return (
       <>
         {!hideNavbar && <BusinessNavbar />}
-        {/* This Box wraps the page content. We add paddingTop to push it below the navbar. */}
         <Box sx={{ pt: !hideNavbar ? navbarHeight : 0 }}>
           <Routes>
             <Route path="login" element={<LoginPage />} />
@@ -44,18 +51,18 @@ function Business() {
               }
             />
             <Route
+              path="your-qr-code"
+              element={
+                <ProtectedRoute>
+                  <QrCodeRedirector />
+                </ProtectedRoute>
+              }
+            />
+             <Route
               path="your-qr-code/:docId"
               element={
                 <ProtectedRoute>
                   <YourQrCodePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="auto-reply"
-              element={
-                <ProtectedRoute>
-                  <AutoReplyPage />
                 </ProtectedRoute>
               }
             />
@@ -72,6 +79,14 @@ function Business() {
               element={
                 <ProtectedRoute>
                   <ProfileSettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="billing"
+              element={
+                <ProtectedRoute>
+                  <BillingPage />
                 </ProtectedRoute>
               }
             />

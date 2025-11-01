@@ -54,36 +54,42 @@ function LoginPage() {
 
   return (
     <Container 
-      component="main" 
-      maxWidth="sm" 
-      sx={{
+        component="main" 
+        maxWidth="sm" 
+        sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            minHeight: '100vh' 
+        }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
+        <QrCode2Icon sx={{ fontSize: 40, mr: 1, color: '#1A73E8' }} />
+        <Typography 
+            variant="h4" 
+            component="div" 
+            sx={{ 
+                fontFamily: "'Italianno', cursive",
+                fontWeight: 'bold',
+            }}
+        >
+            ReviewRaft
+        </Typography>
+      </Box>
+
+      <Box sx={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-      }}
-    >
-      <Box 
-        sx={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, alignSelf: 'flex-start' }}>
-          <QrCode2Icon sx={{ fontSize: 40, mr: 1, color: '#1A73E8' }} />
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-            ReviewQR
-          </Typography>
-        </Box>
-
+        mt: 2,
+        width: '100%' // Ensure the form container takes full width
+      }}>
         <Typography component="h1" variant="h4" sx={{ mb: 1, fontWeight: 'bold' }}>
-          Welcome back
+          Login to your account
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-          Log in to manage your business page.
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Welcome back! Please enter your details.
         </Typography>
 
         {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
@@ -137,7 +143,7 @@ function LoginPage() {
           >
             {loading ? <CircularProgress size={24} /> : 'Login'}
           </Button>
-          <Button
+          {/* <Button
             fullWidth
             variant="outlined"
             startIcon={<GoogleIcon />}
@@ -146,7 +152,7 @@ function LoginPage() {
             disabled={loading}
           >
             Login with Google
-          </Button>
+          </Button> */}
           <Grid container justifyContent="center">
             <Grid item>
               <Typography variant="body2">

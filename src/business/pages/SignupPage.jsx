@@ -69,8 +69,8 @@ function SignupPage() {
         highlightTabs: tabs
       });
 
-      // Step 7: Navigate to the QR code page
-      navigate(`/business/your-qr-code/${docRef.id}`);
+      // Step 7: Navigate to the dashboard page
+      navigate('/business/dashboard');
 
     } catch (err) {
       setError(err.message);
@@ -94,8 +94,15 @@ function SignupPage() {
     <Container component="main" maxWidth="sm" sx={{ mt: 4 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
         <QrCode2Icon sx={{ fontSize: 40, mr: 1, color: '#1A73E8' }} />
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          ReviewQR
+        <Typography 
+            variant="h4" 
+            component="div" 
+            sx={{ 
+                fontFamily: "'Italianno', cursive",
+                fontWeight: 'bold',
+            }}
+        >
+            ReviewRaft
         </Typography>
       </Box>
 
@@ -200,7 +207,7 @@ function SignupPage() {
           >
             {loading ? <CircularProgress size={24} /> : 'Create Account & Continue'}
           </Button>
-          <Button
+          {/* <Button
             fullWidth
             variant="outlined"
             startIcon={<GoogleIcon />}
@@ -209,7 +216,7 @@ function SignupPage() {
             disabled={loading}
           >
             Sign up with Google
-          </Button>
+          </Button> */}
           <Grid container justifyContent="center">
             <Grid item>
                <Typography variant="body2">

@@ -36,42 +36,50 @@ function ProfileSettingsPage() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          // 1. Fetch user data (fullName)
-          const userRef = doc(db, "users", user.uid);
-          const userSnap = await getDoc(userRef);
-          let userData = {};
-          if (userSnap.exists()) {
-            setUserDocRef(userRef);
-            userData = userSnap.data();
-          }
+      // Use onAuthStateChanged to ensure user is loaded
+      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          try {
+            // 1. Fetch user data (fullName)
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            let userData = {};
+            if (userSnap.exists()) {
+              setUserDocRef(userRef);
+              userData = userSnap.data();
+            }
 
-          // 2. Fetch business data (businessName, description, tabs)
-          const businessQuery = query(collection(db, "business_links"), where("userId", "==", user.uid));
-          const businessSnapshot = await getDocs(businessQuery);
-          let businessData = {};
-          if (!businessSnapshot.empty) {
-            const businessDoc = businessSnapshot.docs[0];
-            setBusinessDocRef(businessDoc.ref);
-            businessData = businessDoc.data();
-          }
-          
-          // 3. Combine data into a single state object for the form
-          setFormData({
-            fullName: userData.fullName || '',
-            businessName: businessData.businessName || '',
-            description: businessData.description || '',
-            highlightTabs: businessData.highlightTabs || [],
-          });
+            // 2. Fetch business data (businessName, description, tabs)
+            const businessQuery = query(collection(db, "business_links"), where("userId", "==", user.uid));
+            const businessSnapshot = await getDocs(businessQuery);
+            let businessData = {};
+            if (!businessSnapshot.empty) {
+              const businessDoc = businessSnapshot.docs[0];
+              setBusinessDocRef(businessDoc.ref);
+              businessData = businessDoc.data();
+            }
+            
+            // 3. Combine data into a single state object for the form
+            setFormData({
+              fullName: userData.fullName || '',
+              businessName: businessData.businessName || '',
+              description: businessData.description || '',
+              highlightTabs: businessData.highlightTabs || [],
+            });
 
-        } catch (err) {
-            console.error("Error fetching data:", err);
-            setError("Failed to fetch profile data.");
+          } catch (err) {
+              console.error("Error fetching data:", err);
+              setError("Failed to fetch profile data.");
+          } finally {
+              setLoading(false);
+          }
+        } else {
+            setLoading(false);
+            setError("You must be logged in to view this page.");
         }
-      }
-      setLoading(false);
+      });
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
     };
     fetchData();
   }, []);
@@ -108,14 +116,25 @@ function ProfileSettingsPage() {
   };
 
   const handleRegenerateTabs = async () => {
+    if (!businessDocRef) {
+        setError("Business profile not found. Cannot update tabs.");
+        return;
+    }
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const newTabs = await generateHighlightTabs(formData.description);
+      // Update state first for immediate UI feedback
       setFormData({ ...formData, highlightTabs: newTabs });
+      // Then, update the document in Firestore
+      await updateDoc(businessDocRef, {
+        highlightTabs: newTabs
+      });
+      setSuccess("Highlight tabs have been regenerated and saved!");
     } catch (e) {
       console.error("Error generating highlight tabs:", e);
-      setError("Failed to regenerate highlight tabs.");
+      setError("Failed to regenerate and save highlight tabs.");
     }
     setLoading(false);
   };
@@ -133,6 +152,14 @@ function ProfileSettingsPage() {
     }
   };
   const [newTab, setNewTab] = useState('');
+
+  if (loading) {
+      return (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+              <CircularProgress />
+          </Box>
+      )
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>

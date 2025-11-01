@@ -17,10 +17,11 @@ import {
   Menu,
   MenuItem
 } from '@mui/material';
-import { ArrowBack, Add } from '@mui/icons-material';
+import { Add } from '@mui/icons-material';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 
 const allLanguages = [
     { code: 'en', name: 'English' }, { code: 'es', name: 'Español' },
@@ -75,6 +76,7 @@ const ReviewGeneratorPage = () => {
   const [review, setReview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [businessName, setBusinessName] = useState('');
   const [businessLink, setBusinessLink] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -130,22 +132,17 @@ const ReviewGeneratorPage = () => {
             if (linkDocSnap.exists()) {
               const linkData = linkDocSnap.data();
               setBusinessLink(linkData.url);
+              setBusinessName(linkData.businessName || '');
 
-              const userDocRef = doc(db, "users", linkData.userId);
-              const userDocSnap = await getDoc(userDocRef);
-              
-              if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                if (userData.highlightTabs && userData.highlightTabs.length > 0) {
-                  setKeywords(userData.highlightTabs);
-                  const preSelected = userData.highlightTabs.slice(0, 3);
-                  setSelectedKeywords(preSelected);
-                  const initialRatings = {};
-                  preSelected.forEach(kw => {
-                    initialRatings[kw] = 75;
-                  });
-                  setKeywordRatings(initialRatings);
-                }
+              if (linkData.highlightTabs && linkData.highlightTabs.length > 0) {
+                setKeywords(linkData.highlightTabs);
+                const preSelected = linkData.highlightTabs.slice(0, 3);
+                setSelectedKeywords(preSelected);
+                const initialRatings = {};
+                preSelected.forEach(kw => {
+                  initialRatings[kw] = 75;
+                });
+                setKeywordRatings(initialRatings);
               }
             }
         } catch (err) {
@@ -167,7 +164,6 @@ const ReviewGeneratorPage = () => {
             const countryCode = data.country;
             const regionName = data.region;
             const regionCode = regionNameToCodeMap[regionName];
-            console.log('Detected Country:', countryCode, 'Detected Region:', regionName, '-> Mapped Code:', regionCode);
 
             const browserLangCode = (navigator.language || navigator.userLanguage).split('-')[0];
             let stateLangCode = null;
@@ -218,13 +214,8 @@ const ReviewGeneratorPage = () => {
 
   const handleCopyAndAddReview = () => {
     navigator.clipboard.writeText(review);
-
     if (businessLink) {
-        // Calculate star rating: 1 to 5
-        const starRating = Math.max(1, Math.round((experience / 100) * 4) + 1);
-        const urlWithRating = businessLink.replace(/(\?|&)review=([1-5])/, ''); // remove existing review param
-        const finalUrl = `${urlWithRating}${urlWithRating.includes('?') ? '&' : '?'}review=${starRating}`;
-        window.location.href = finalUrl;
+        window.location.href = businessLink;
     } else {
         alert('Business review link not found!');
     }
@@ -247,18 +238,17 @@ const ReviewGeneratorPage = () => {
 
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: '#f5f5f5', minHeight: '100vh', pb: 10 }}>
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar position="static" sx={{ backgroundColor: 'white', color: 'black' }} elevation={1}>
         <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="back">
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
-            Your Review
+          <QrCode2Icon sx={{ fontSize: 28, mr: 1, color: '#1A73E8' }} />
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+            {businessName || 'Leave a Review'}
           </Typography>
         </Toolbar>
       </AppBar>
 
       <Box sx={{ p: 2 }}>
+        {/* ... rest of the page content is unchanged */}
         <Paper sx={{ p: 2, mb: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>Review Language</Typography>
           <Grid container spacing={1}>
@@ -378,6 +368,10 @@ const ReviewGeneratorPage = () => {
             placeholder={!review && !loading ? "Click 'Generate' to create a review." : ""}
           />
         </Paper>
+        
+        <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'grey.600', mt: 2 }}>
+            Powered by ReviewRaft
+        </Typography>
       </Box>
 
       <Box sx={{ p: 2, position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', boxShadow: '0 -2px 5px rgba(0,0,0,0.1)' }}>
