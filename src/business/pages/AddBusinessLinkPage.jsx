@@ -26,6 +26,7 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
   const [inputValue, setInputValue] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const debouncedInput = useDebounce(inputValue, 300);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -35,17 +36,15 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
       }
       
       const requestBody = {
-        "textQuery": debouncedInput,
-        "includedTypes": ["establishment"]
+        "input": debouncedInput,
       };
 
       try {
-        const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Goog-Api-Key': apiKey,
-            'X-Goog-FieldMask': 'places.displayName,places.id,places.formattedAddress,places.location'
           },
           body: JSON.stringify(requestBody)
         });
@@ -57,7 +56,7 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
         }
 
         const data = await response.json();
-        setSuggestions(data.places || []);
+        setSuggestions(data.suggestions || []);
       } catch (error) {
         console.error('Error fetching autocomplete suggestions:', error);
         setSuggestions([]);
@@ -67,10 +66,35 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
     fetchSuggestions();
   }, [debouncedInput, apiKey]);
 
-  const handleSelect = (place) => {
-    setInputValue(place.displayName.text);
+  const handleSelect = async (suggestion) => {
+    setLoading(true);
+    setInputValue(suggestion.placePrediction.text.text);
     setSuggestions([]);
-    onPlaceSelect(place);
+    
+    const placeId = suggestion.placePrediction.placeId;
+
+    try {
+      const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Failed to fetch place details:', response.statusText);
+        setLoading(false);
+        return;
+      }
+
+      const placeDetails = await response.json();
+      onPlaceSelect(placeDetails);
+
+    } catch (error) {
+      console.error('Error fetching place details:', error);
+    }
+    setLoading(false);
   };
 
   return (
@@ -84,18 +108,19 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
       {suggestions.length > 0 && (
         <List component="div" sx={{ position: 'relative' }}>
           <Paper sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1200, mt: 1 }}>
-            {suggestions.map((place) => (
+            {suggestions.map((suggestion) => (
               <ListItem
                 button
-                key={place.id}
-                onClick={() => handleSelect(place)}
+                key={suggestion.placePrediction.placeId}
+                onClick={() => handleSelect(suggestion)}
               >
-                <ListItemText primary={place.displayName.text} />
+                <ListItemText primary={suggestion.placePrediction.text.text} />
               </ListItem>
             ))}
           </Paper>
         </List>
       )}
+      {loading && <CircularProgress size={24} sx={{mt: 2}}/>}
     </div>
   );
 };
