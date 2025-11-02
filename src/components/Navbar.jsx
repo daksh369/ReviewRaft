@@ -1,37 +1,35 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { IconButton } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import { Link, useNavigate } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import './Navbar.css';
 
 function Navbar() {
+  const navigate = useNavigate();
+
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        <Link to="/" className="navbar-logo">
-          <QrCode2Icon sx={{ fontSize: 40, mr: 1, color: '#1A73E8' }} />
-          ReviewQR
+    <AppBar position="static" color="transparent" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
+          <QrCode2Icon sx={{ fontSize: 32, mr: 1, color: 'primary.main' }} />
+          <Typography 
+            variant="h6" 
+            component="div" 
+            sx={{ 
+              fontWeight: 'bold', 
+              fontFamily: "'Italianno', cursive",
+              fontSize: '2.5rem'
+            }}
+          >
+            ReviewRaft
+          </Typography>
         </Link>
-        <ul className="nav-menu">
-          <li className="nav-item">
-            <Link to="/" className="nav-links">
-              <IconButton>
-                <HomeIcon />
-              </IconButton>
-            </Link>
-          </li>
-          <li className="nav-item">
-            <Link to="/scan-qr" className="nav-links">
-                <IconButton>
-                    <QrCodeScannerIcon />
-                </IconButton>
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </nav>
+        <Box>
+          <Button color="inherit" onClick={() => navigate('/business/login')}>
+            Log In
+          </Button>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 }
 
