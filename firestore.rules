@@ -6,22 +6,24 @@ service cloud.firestore {
     match /business_links/{linkId} {
       allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      // For delete operations, we check the 'resource' object, which represents the
-      // document *before* the deletion.
       allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Reviews can be created by anyone (unauthenticated customers).
+    // Reviews can be created by anyone.
+    // They can only be read by the owner of the business they are associated with.
     match /reviews/{reviewId} {
       allow create: if true;
-      allow read, update, delete: if false; // Nobody can modify or delete for now
+      allow read: if request.auth != null &&
+                    exists(/databases/$(database)/documents/business_links/$(resource.data.businessId)) &&
+                    get(/databases/$(database)/documents/business_links/$(resource.data.businessId)).data.userId == request.auth.uid;
+      allow update, delete: if false; // Nobody can modify or delete for now
     }
 
     // A user can read, create, and update their own profile data.
     match /users/{userId} {
-      allow read: if true; // Allow public read access to user profiles
+      allow read: if true;
       allow create, update: if request.auth != null && request.auth.uid == userId;
-      allow delete: if false; // Prevent users from deleting their own accounts
+      allow delete: if false;
     }
   }
 }
