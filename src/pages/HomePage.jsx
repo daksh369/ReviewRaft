@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@mui/material';
 import ReviewGenerator from '../components/ReviewGenerator';
 
 function HomePage() {
@@ -10,6 +11,14 @@ function HomePage() {
       <header className="App-header">
         <h1>Google Review Automation</h1>
         <p>Generate AI-powered reviews for your favorite businesses.</p>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate('/business/login')}
+          sx={{ mt: 2 }}
+        >
+          Business Login
+        </Button>
       </header>
       <main>
         <ReviewGenerator />
