@@ -10,6 +10,7 @@ import {
   TextField,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
 } from '@mui/material';
 import { 
@@ -109,12 +110,10 @@ const PlaceAutocomplete = ({ onPlaceSelect, apiKey }) => {
         <List component="div" sx={{ position: 'relative' }}>
           <Paper sx={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1200, mt: 1 }}>
             {suggestions.map((suggestion) => (
-              <ListItem
-                button
-                key={suggestion.placePrediction.placeId}
-                onClick={() => handleSelect(suggestion)}
-              >
-                <ListItemText primary={suggestion.placePrediction.text.text} />
+              <ListItem key={suggestion.placePrediction.placeId} disablePadding>
+                <ListItemButton onClick={() => handleSelect(suggestion)}>
+                  <ListItemText primary={suggestion.placePrediction.text.text} />
+                </ListItemButton>
               </ListItem>
             ))}
           </Paper>
