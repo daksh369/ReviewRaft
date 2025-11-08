@@ -17,6 +17,7 @@
     "@mui/material": "^7.3.4",
     "@vis.gl/react-google-maps": "^1.7.0",
     "firebase": "^12.4.0",
+    "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.1",

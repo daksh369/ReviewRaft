@@ -39,7 +39,9 @@ The foundation of our analytics is the structured data captured for each review 
 The framework is built on the **"Single Source of Truth"** principle. The analytics dashboard will always dynamically reflect the business owner's current priorities as defined in their business profile.
 
 *   **Dynamic Keyword Management:** The business owner's currently saved list of keywords (`highlightTabs`) is considered the definitive list of "Core Metrics."
-*   **Robustness:** The analytics will not break or lose data if the owner adds or removes keywords from their profile. The dashboard will re-filter the historical data to match the owner's current view.
+*   **Robustness:** The analytics will not break or lose data if the owner adds or removes keywords from their profile. The dashboard will re-filter the.
+.
+ the historical data to match the owner's current view.
 
 ### Dashboard Structure
 
@@ -58,5 +60,23 @@ This framework will empower business owners to answer critical questions such as
 *   How did my recent operational changes impact customer ratings?
 *   What are customers talking about that I may not be formally tracking?
 *   What languages are my customers speaking?
+
+## Poster Generation Feature
+
+### Overview
+
+The application now includes a feature that allows business owners to download a professionally designed poster. This poster includes their business name, address, and a QR code that customers can scan to leave a review.
+
+### Key Features:
+
+*   **Dynamic Poster Generation:** The poster is dynamically generated using the business's information, including their name, address, and unique QR code.
+*   **Professional Design:** The poster is designed to be visually appealing and to encourage customers to scan the QR code.
+*   **Easy to Download:** The poster can be downloaded with a single click and is ready to be printed and displayed at the business's physical location.
+
+### Implementation Details:
+
+*   **`Poster.jsx` Component:** A dedicated React component is used to create the poster's layout and design.
+*   **`html2canvas` Library:** The `html2canvas` library is used to convert the `Poster` component into a high-quality image that can be downloaded.
+*   **CORS Configuration:** The Firebase Storage bucket has been configured to allow cross-origin resource sharing, which is necessary for the `html2canvas` library to access the QR code image.
 
 ***

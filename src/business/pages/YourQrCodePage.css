@@ -1,0 +1,63 @@
+/* src/business/pages/YourQrCodePage.css */
+.qr-code-container {
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .qr-code-image {
+    border: 8px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 1rem;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .qr-code-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+  
+  .poster-container {
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin-top: 20px;
+    display: inline-block;
+    background-color: #f9f9f9;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  
+  .poster-header {
+    margin-bottom: 15px;
+  }
+  
+  .poster-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .poster-header p {
+    margin: 5px 0 0;
+    font-size: 16px;
+    color: #666;
+  }
+  
+  .poster-qr-code {
+    margin-bottom: 15px;
+  }
+  
+  .poster-footer p {
+    margin: 0;
+    font-size: 14px;
+    color: #888;
+  }
+  
+  .hidden-poster {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+  }
+  

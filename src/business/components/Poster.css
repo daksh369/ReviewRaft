@@ -1,0 +1,113 @@
+/* src/business/components/Poster.css */
+
+.poster-container-final {
+    width: 400px;
+    font-family: 'Inter', sans-serif;
+    background-color: white;
+    border: 1px solid #ccc;
+    display: inline-block;
+    text-align: center;
+}
+
+.poster-header-bg {
+    background-image: url('https://storage.googleapis.com/review-raft.appspot.com/resources/poster_header.png');
+    background-size: cover;
+    background-position: center;
+    height: 100px;
+    position: relative;
+    border-bottom: 1px solid #eee;
+}
+
+.poster-brand-header {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.poster-brand-name-header {
+    color: #1A73E8;
+    font-family: 'Arvo', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.poster-content {
+    padding: 30px 20px;
+}
+
+.poster-title {
+    font-family: 'Arvo', serif;
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: #000000;
+    line-height: 1.2;
+}
+
+.poster-highlight {
+    color: #1A73E8;
+}
+
+.poster-subtitle {
+    font-size: 1.1rem;
+    color: #000000;
+    margin-bottom: 25px;
+}
+
+.poster-qr-code {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+
+.poster-qr-image {
+    width: 220px;
+    height: 220px;
+    border: 5px solid #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.poster-location {
+    margin-bottom: 15px;
+    color: #000000;
+}
+
+.poster-business-name {
+    font-weight: 700 !important;
+}
+
+.poster-powered-by-container {
+    margin-top: 10px;
+}
+
+.poster-powered-by {
+    color: #9CA3AF;
+    font-size: 0.8rem;
+}
+
+.poster-powered-by-brand {
+    font-family: 'Italianno', cursive;
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: #1A73E8;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.poster-footer-bg {
+    background-image: url('https://storage.googleapis.com/review-raft.appspot.com/resources/poster_footer.png');
+    background-size: cover;
+    background-position: center;
+    height: 80px;
+    position: relative;
+}
+
+.poster-sparkles {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 2rem;
+}

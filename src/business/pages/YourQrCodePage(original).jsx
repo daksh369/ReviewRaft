@@ -1,4 +1,3 @@
-// src/business/pages/YourQrCodePage.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container,
@@ -16,9 +15,6 @@ import { db, storage } from '../../firebase';
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { QRCodeCanvas } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import Poster from '../components/Poster';
-import './YourQrCodePage.css';
 
 function YourQrCodePage() {
     const { docId } = useParams();
@@ -29,7 +25,6 @@ function YourQrCodePage() {
     const [qrCodeUrl, setQrCodeUrl] = useState('');
     const [businessData, setBusinessData] = useState(null);
     const qrCodeRef = useRef(null);
-    const posterRef = useRef(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
     const triggerQRCodeGeneration = useCallback(() => {
@@ -100,14 +95,12 @@ function YourQrCodePage() {
     }, [docId, triggerQRCodeGeneration]);
 
     const handleDownload = () => {
-        if (posterRef.current) {
-            html2canvas(posterRef.current, { useCORS: true, scale: 2 }).then((canvas) => {
-                const link = document.createElement('a');
-                link.href = canvas.toDataURL('image/png');
-                link.download = `${businessData?.businessName?.replace(/\s+/g, '-') || 'business'}-poster.png`;
-                link.click();
-            });
-        }
+        const link = document.createElement('a');
+        link.href = qrCodeUrl;
+        link.download = `${businessData?.businessName?.replace(/\s+/g, '-') || 'business'}-qr-code.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleCopyToClipboard = () => {
@@ -169,7 +162,7 @@ function YourQrCodePage() {
                     Download
                 </Button>
                 <Button variant="outlined" startIcon={<ContentCopy />} onClick={handleCopyToClipboard} disabled={!qrCodeValue || loading || isGenerating}>
-                    Link
+                    Copy Link
                 </Button>
                 <IconButton onClick={triggerQRCodeGeneration} disabled={loading || isGenerating}>
                     <Refresh />
@@ -179,17 +172,6 @@ function YourQrCodePage() {
                 </IconButton>
             </Box>
             {isGenerating && <Typography sx={{ mt: 2 }} variant="caption">Generating new QR Code...</Typography>}
-
-            <div className="hidden-poster">
-                {businessData && qrCodeUrl && (
-                    <Poster
-                        ref={posterRef}
-                        qrCodeUrl={qrCodeUrl}
-                        businessName={businessData.businessName}
-                        businessAddress={businessData.address}
-                    />
-                )}
-            </div>
         </Container>
     );
 }
