@@ -6,16 +6,14 @@ import {
   TextField,
   Button,
   Grid,
-  Link,
   CircularProgress,
   Alert,
   IconButton,
   InputAdornment
 } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import GoogleIcon from '@mui/icons-material/Google';
-import { useNavigate } from 'react-router-dom';
 import { auth, db, googleProvider } from '../../firebase';
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import { doc, setDoc, addDoc, collection, updateDoc } from "firebase/firestore"; 
@@ -207,21 +205,11 @@ function SignupPage() {
           >
             {loading ? <CircularProgress size={24} /> : 'Create Account & Continue'}
           </Button>
-          {/* <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            sx={{ mb: 2, py: 1.5, textTransform: 'none', fontSize: '1.1rem', borderRadius: '8px', borderColor: 'grey.400', color: 'black' }}
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-          >
-            Sign up with Google
-          </Button> */}
           <Grid container justifyContent="center">
             <Grid item>
                <Typography variant="body2">
                 Already have an account?{' '}
-                <Link href="/business/login" variant="body2" sx={{ color: '#1A73E8', textDecoration: 'none' }}>
+                <Link to="/login" style={{ color: '#1A73E8', textDecoration: 'none' }}>
                   Login here
                 </Link>
               </Typography>

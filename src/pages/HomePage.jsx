@@ -35,7 +35,7 @@ function HomePage() {
         <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
           Effortlessly grow your online reputation with a simple QR code scan.
         </Typography>
-        <Button variant="contained" size="large" onClick={() => navigate('/business/signup')}>
+        <Button variant="contained" size="large" onClick={() => navigate('/signup')}>
           Boost Your Reviews Now!
         </Button>
       </Container>
@@ -71,7 +71,7 @@ function HomePage() {
         <Typography variant="h6" color="text.secondary" sx={{ mb: 4 }}>
           Start collecting 5-star reviews today and watch your business grow.
         </Typography>
-        <Button variant="contained" size="large" onClick={() => navigate('/business/signup')}>
+        <Button variant="contained" size="large" onClick={() => navigate('/signup')}>
           Get Started Now
         </Button>
       </Container>

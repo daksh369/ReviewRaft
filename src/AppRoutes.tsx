@@ -8,10 +8,15 @@ import ContactPage from "./pages/ContactPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import LoginPage from "./business/pages/LoginPage";
+import SignupPage from "./business/pages/SignupPage";
 
 function AppRoutes() {
   const location = useLocation();
-  const showNavbar = !location.pathname.startsWith('/business') && location.pathname !== '/review';
+  const showNavbar = !location.pathname.startsWith('/business') &&
+                     location.pathname !== '/review' &&
+                     location.pathname !== '/login' &&
+                     location.pathname !== '/signup';
 
   return (
     <>
@@ -24,6 +29,8 @@ function AppRoutes() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>

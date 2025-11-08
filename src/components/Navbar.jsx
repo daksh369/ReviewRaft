@@ -24,7 +24,7 @@ function Navbar() {
           </Typography>
         </Link>
         <Box>
-          <Button color="inherit" onClick={() => navigate('/business/login')}>
+          <Button color="inherit" onClick={() => navigate('/login')}>
             Log In
           </Button>
         </Box>

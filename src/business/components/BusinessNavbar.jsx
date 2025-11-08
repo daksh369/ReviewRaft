@@ -9,7 +9,7 @@ const BusinessNavbar = () => {
 
     const handleLogout = () => {
         auth.signOut();
-        navigate('/business/login');
+        navigate('/login');
     };
     
     const handleHome = () => {
